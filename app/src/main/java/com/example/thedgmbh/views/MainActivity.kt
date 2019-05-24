@@ -7,7 +7,6 @@ import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.Observer
@@ -26,9 +25,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
-
 class MainActivity : AppCompatActivity() {
-
 
     private var productRecycleView: RecyclerView? = null
     private var productAdapter: ProductAdapter? = null
@@ -41,18 +38,15 @@ class MainActivity : AppCompatActivity() {
     private var listOfData: MutableList<Product>? = null
     private var parent: ConstraintLayout? = null
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
 
         (this.application as RoomApplication)
             .getApplicationComponent()?.inject(this)
 
         progressBar = findViewById(R.id.pb_main)
         parent = findViewById(R.id.parent)
-
 
         productRecycleView = findViewById(R.id.rv_products_list)
         productRecycleView!!.layoutManager = GridLayoutManager(this, 2)
@@ -67,7 +61,6 @@ class MainActivity : AppCompatActivity() {
                 startActivity(productsIntent)
             }
         })
-
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -89,13 +82,12 @@ class MainActivity : AppCompatActivity() {
             if (SaveSharedPreference.getUDb(this)) {
                 oldData()
             }
-
         } else {
             noInternet()
             if (SaveSharedPreference.getUDb(this)) {
                 oldData()
             }else{
-                Toast.makeText(this,"No Data stored .. failed to load \nPlease turn on internet and try again",Toast.LENGTH_SHORT).show()
+                showSnack("No Data stored .. failed to load \nPlease turn on internet and try again")
             }
         }
     }
@@ -103,20 +95,15 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("RestrictedApi")
     private fun noInternet() {
         progressBar!!.visibility = View.GONE
-        Snackbar.make(
-            parent!!,
-            "No Internet Connection",
-            Snackbar.LENGTH_LONG)
-            .setDuration(3000)
-            .show()
+        showSnack("No Internet Connection")
 
-        val fAb: FloatingActionButton = findViewById(R.id.fab)
+        val refreshFab: FloatingActionButton = findViewById(R.id.fab)
         if (!SaveSharedPreference.getUDb(this)) {
-            fAb.visibility = View.VISIBLE
+            refreshFab.visibility = View.VISIBLE
         }
-        fAb.setOnClickListener {
+        refreshFab.setOnClickListener {
             progressBar!!.visibility = View.VISIBLE
-            fAb.visibility = View.GONE
+            refreshFab.visibility = View.GONE
             if (isNetworkAvailable()) {
                 newData()
             } else {
@@ -146,17 +133,21 @@ class MainActivity : AppCompatActivity() {
                 if (listOfData == null) {
                     setListData(products)
                     newData()
-                    Snackbar.make(
-                        parent!!,
-                        "Data is up to date",
-                        Snackbar.LENGTH_LONG)
-                        .setDuration(3000)
-                        .show()
+                    showSnack("Data is up to date")
                     for (product in products) {
                         newProductViewModel!!.addNewItemToDatabase(product)
                     }
                     SaveSharedPreference.setDb(this@MainActivity, true)
                 }
             })
+    }
+
+    private fun showSnack(msg:String){
+        Snackbar.make(
+            parent!!,
+            msg,
+            Snackbar.LENGTH_LONG)
+            .setDuration(3000)
+            .show()
     }
 }
